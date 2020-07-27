@@ -50,7 +50,8 @@ class ToastContainer extends Component {
         if (dx !== 0) {
           Animated.timing(this.state.pan, {
             toValue: { x: dx, y: 0 },
-            duration: 100
+            duration: 100,
+            useNativeDriver: false
           }).start(() => this.closeToast('swipe'));
         }
       }
@@ -60,6 +61,12 @@ class ToastContainer extends Component {
   componentDidMount() {
     Keyboard.addListener('keyboardDidShow', this.keyboardDidShow);
     Keyboard.addListener('keyboardDidHide', this.keyboardDidHide);
+  }
+
+  // Call the onButtonClick event and close the modal
+  onButtonClick(reason, func) {
+    if (func && typeof func === 'function') func();
+    this.closeModal(reason);
   }
 
   getToastStyle() {
@@ -147,7 +154,7 @@ class ToastContainer extends Component {
       useNativeDriver: false
     }).start();
   }
-  closeModal(reason) {
+  closeModal = reason => {
     this.setState({
       modalVisible: false
     });
@@ -155,7 +162,7 @@ class ToastContainer extends Component {
     if (onClose && typeof onClose === 'function') {
       onClose(reason);
     }
-  }
+  };
   closeToast(reason) {
     clearTimeout(this.closeTimeout);
     Animated.timing(this.state.fadeAnim, {
@@ -163,7 +170,7 @@ class ToastContainer extends Component {
       duration: 200,
       useNativeDriver: false
     }).start(() => {
-      this.closeModal.bind(this, reason);
+      this.closeModal(reason);
       this.state.pan.setValue({ x: 0, y: 0 });
     });
   }
@@ -189,7 +196,11 @@ class ToastContainer extends Component {
             {this.state.buttonText && (
               <Button
                 style={this.state.buttonStyle}
-                onPress={() => this.closeToast('user')}
+                onPress={() =>
+                  this.state.onButtonClick
+                    ? this.onButtonClick('user', this.state.onButtonClick)
+                    : this.closeToast('user')
+                }
               >
                 <Text style={this.state.buttonTextStyle}>
                   {this.state.buttonText}
